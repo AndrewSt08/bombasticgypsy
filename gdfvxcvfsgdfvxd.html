@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Archimédův Zákon: Interaktivní Simulace</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #1a1a2e;
+            color: #ffffff;
+            text-align: center;
+            margin: 0;
+            padding: 20px;
+        }
+        h1 { color: #00ffff; text-shadow: 0 0 10px #00ffff; margin-bottom: 5px; }
+        .container {
+            max-width: 900px;
+            margin: auto;
+            background: #161625;
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 0 20px rgba(0,255,255,0.2);
+        }
+        
+        /* DIAGRAM VZORCE */
+        .blueprint-container {
+            background: #0f1123;
+            border: 2px dashed #343f56;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        .formula-diagram {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 32px;
+            font-weight: bold;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .node {
+            padding: 10px 15px;
+            border-radius: 5px;
+            min-width: 60px;
+            text-align: center;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+        }
+        .fv { background-color: #00ffff; color: #111; }
+        .v { background-color: #ff007f; color: #fff; }
+        .rho { background-color: #ffaa00; color: #111; }
+        .g { background-color: #4ade80; color: #111; }
+        
+        /* LEGENDA DIAGRAMU */
+        .legend-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            text-align: left;
+            font-size: 14px;
+        }
+        .legend-card {
+            background: #1f223d;
+            padding: 12px;
+            border-radius: 6px;
+            border-top: 4px solid #fff;
+        }
+        
+        /* HERNÍ ZÓNA */
+        .game-zone {
+            position: relative;
+            width: 100%;
+            height: 250px;
+            background: linear-gradient(to bottom, #1a1a2e 30%, #005f73 30%);
+            border: 3px solid #00ffff;
+            border-radius: 10px;
+            overflow: hidden;
+            margin-top: 20px;
+        }
+        #player-block {
+            position: absolute;
+            left: 50%;
+            top: 15px;
+            transform: translateX(-50%);
+            width: 90px;
+            height: 90px;
+            background-color: #ff007f;
+            border: 2px solid #fff;
+            transition: top 0.8s ease-out;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 11px;
+            box-shadow: 0 0 15px rgba(255, 0, 127, 0.6);
+            line-height: 1.3;
+        }
+        .controls {
+            margin: 20px 0;
+            padding: 15px;
+            background: #1f223d;
+            border-radius: 10px;
+        }
+        select {
+            padding: 10px 15px;
+            font-size: 16px;
+            background: #1a1a2e;
+            color: #00ffff;
+            border: 1px solid #00ffff;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        #explanation {
+            margin-top: 15px;
+            font-style: italic;
+            color: #4ade80;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>BLUEPRINT: ARCHIMÉDŮV ZÁKON</h1>
+    <p style="color: #aaa; margin-top: 0;">Interaktivní simulace potápění a vytlačeného objemu</p>
+
+    <div class="blueprint-container">
+        <div class="formula-diagram">
+            <div class="node fv" id="d-fv">Fv</div>
+            <div>=</div>
+            <div class="node v">V</div>
+            <div>·</div>
+            <div class="node rho" id="d-rho">ρ</div>
+            <div>·</div>
+            <div class="node g">g</div>
+        </div>
+
+        <div class="legend-grid">
+            <div class="legend-card" style="border-top-color: #00ffff;">
+                <strong style="color: #00ffff;">F<sub>v</sub> - Vztlaková síla</strong>
+                <p style="margin: 5px 0 0 0;">Výsledný <b>PUSH SMĚREM NAHORU</b>. Generuje ho kapalina a snaží se předmět nadlehčit nebo vystřelit nad hladinu.</p>
+            </div>
+            <div class="legend-card" style="border-top-color: #ff007f;">
+                <strong style="color: #ff007f;">V - Objem ponořené části</strong>
+                <p style="margin: 5px 0 0 0;">Kolik <b>"bloků" tvého tělesa</b> je pod hladinou. Čím větší objekt potopíš, tím větší sílu vody proti sobě vyvoláš.</p>
+            </div>
+            <div class="legend-card" style="border-top-color: #ffaa00;">
+                <strong style="color: #ffaa00;">ρ (ró) - Hustota kapaliny</strong>
+                <p style="margin: 5px 0 0 0;"><b>Hustota pixelů (molekul)</b> v tekutině. Voda je standard, olej je slabý (low density), rtuť je extrémní boss (high density).</p>
+            </div>
+            <div class="legend-card" style="border-top-color: #4ade80;">
+                <strong style="color: #4ade80;">g - Tíhové zrychlení</strong>
+                <p style="margin: 5px 0 0 0;">Základní <b>gravitace herního enginu Země</b>. Pro zjednodušení počítáme, že má hodnotu zaokrouhleně <b>10 N/kg</b>.</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="controls">
+        <label for="liquid-select" style="font-weight: bold;">Změň hustotu kapaliny (stat ρ): </label>
+        <select id="liquid-select" onchange="recalculate()">
+            <option value="650">Strojní olej (ρ = 650 kg/m³)</option>
+            <option value="833.33">Speciální kapalina (ρ = 833.3 kg/m³)</option>
+            <option value="1000" selected>Voda (ρ = 1000 kg/m³)</option>
+            <option value="1260">Glycerin (ρ = 1260 kg/m³)</option>
+            <option value="13600">Rtuť (ρ = 13600 kg/m³)</option>
+        </select>
+        <div id="explanation"></div>
+    </div>
+
+    <div class="game-zone">
+        <div id="player-block">
+            <span id="block-v">V = 0.002 m³</span>
+            <span id="block-weight">m = 1.67 kg</span>
+            <span id="block-action" style="color: #00ffff; font-weight: bold; margin-top: 5px;"></span>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Nastavení fyzikálních vlastností kostky
+    const V_celkovy = 0.002; // Celkový objem kostky = 2 litry
+    const g = 10;           // Gravitace Země
+    const Fg = 16.67;       // Tíhová síla kostky v Newtonech (odpovídá váze cca 1.67 kg)
+    // Hustota kostky je tím pádem přesně 833.33 kg/m³
+
+    function recalculate() {
+        const rho = parseFloat(document.getElementById('liquid-select').value);
+        
+        // Výpočet maximální možné vztlakové síly (při plném ponoření)
+        const Fv_max = V_celkovy * rho * g;
+
+        // Propisování hustoty do vizuálního diagramu
+        document.getElementById('d-rho').innerText = Math.round(rho);
+
+        const block = document.getElementById('player-block');
+        const blockAction = document.getElementById('block-action');
+        const explanation = document.getElementById('explanation');
+
+        let vytlacenoLitrů = 0;
+
+        // Simulace 3 stavů podle Archimédova zákona
+        if (Fv_max < Fg) {
+            // 1. POTOPENÍ: Gravitace vyhrála, kostka klesá na dno
+            block.style.top = "150px"; 
+            document.getElementById('d-fv').innerText = Fv_max.toFixed(1) + " N";
+            
+            // Když se potopí celá, vytlačí celý svůj objem (2 litry)
+            vytlacenoLitrů = V_celkovy * 1000; 
+            
+            blockAction.innerText = "Klesá ke dnu!";
+            explanation.innerText = "Kostka má větší hustotu než kapalina. Potopila se celá a vytlačila svůj plný objem.";
+
+        } else if (Fv_max > Fg) {
+            // 2. PLAVÁNÍ: Vztlak vyhrál, kostka plave na hladině
+            block.style.top = "15px"; 
+            document.getElementById('d-fv').innerText = Fg.toFixed(1) + " N"; // Skutečný vztlak se rovná váze
+            
+            // Plovoucí těleso vytlačí přesně tolik kg kapaliny, kolik samo váží (m = 1.67 kg)
+            // Objem v litrech zjistíme jako: (hmotnost / hustota kapaliny) * 1000
+            const hmotnostKostky = Fg / g;
+            vytlacenoLitrů = (hmotnostKostky / rho) * 1000;
+            
+            blockAction.innerText = "Plave!";
+            explanation.innerText = "Kostka má menší hustotu než kapalina. Vztlak ji vytlačil nahoru, je ponořená jen částečně.";
+
+        } else {
+            // 3. VZNÁŠENÍ: Síly jsou v absolutní rovnováze
+            block.style.top = "75px"; 
+            document.getElementById('d-fv').innerText = Fv_max.toFixed(1) + " N";
+            
+            // Vznáší se celá pod hladinou, takže vytlačí celý svůj objem
+            vytlacenoLitrů = V_celkovy * 1000;
+            
+            blockAction.innerText = "Vznáší se!";
+            explanation.innerText = "Hustota kostky je na chlup stejná jako hustota kapaliny. Síly jsou v dokonalé rovnováze.";
+        }
+
+        // Zobrazení vytlačené vody přímo na kostce
+        blockAction.innerHTML += `<br><span style="color: #fff;">Vytlačeno:<br>${vytlacenoLitrů.toFixed(2)} litrů</span>`;
+    }
+
+    // Inicializace simulace po načtení stránky
+    window.onload = recalculate;
+</script>
+
+</body>
+</html>
